@@ -1,7 +1,7 @@
 package me.atomicstring.tracker;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.javalin.Javalin;
 
@@ -11,7 +11,7 @@ import io.javalin.Javalin;
  */
 public class App {
 	
-	static final Logger logger = LogManager.getLogger(App.class);
+	static final Logger logger = LoggerFactory.getLogger(App.class);
 	
 
 	public static void main(String[] args) {
