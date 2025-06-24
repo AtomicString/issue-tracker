@@ -1,11 +1,10 @@
 pipeline {
   agent any
 
-  triggers {
-    pollSCM('H/2 * * * *') // Use webhook instead if available
-  }
-
   environment {
+    POSTGRES_USER = credentials('POSTGRES_USER')
+    POSTGRES_PASSWORD = credentials('POSTGRES_PASSWORD')
+    POSTGRES_DB = credentials('POSTGRES_DB')
     DOCKER_BUILDKIT = '1'
   }
 
