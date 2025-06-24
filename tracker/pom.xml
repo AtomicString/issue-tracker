@@ -19,31 +19,50 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>3.8.1</version>
-   	<scope>test</scope>
+   	  <scope>test</scope>
     </dependency>
     <dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-simple</artifactId>
-    <version>2.0.16</version>
-</dependency>
-  <dependency>
-    <groupId>io.javalin</groupId>
-    <artifactId>javalin</artifactId>
-    <version>6.6.0</version>
-  </dependency>
-  <dependency>
-   <groupId>com.zaxxer</groupId>
-   <artifactId>HikariCP</artifactId>
-   <version>4.0.3</version>
-  </dependency>
-  <dependency>
-    <groupId>org.postgresql</groupId>
-    <artifactId>postgresql</artifactId>
-    <version>42.7.7</version>
-  </dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>2.0.16</version>
+	</dependency>
+	<dependency>
+	  <groupId>io.javalin</groupId>
+      <artifactId>javalin</artifactId>
+      <version>6.6.0</version>
+ 	</dependency>
+	<dependency>
+	  <groupId>com.zaxxer</groupId>
+	  <artifactId>HikariCP</artifactId>
+	  <version>4.0.3</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.7</version>
+	</dependency>
+	<dependency>
+	  <groupId>com.j2html</groupId>
+      <artifactId>j2html</artifactId>
+	  <version>1.6.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.webjars.npm</groupId>
+		<artifactId>htmx.org</artifactId>
+		<version>2.0.5</version>
+	</dependency>
   </dependencies>
   <build>
   	<plugins>
+  	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-compiler-plugin</artifactId>
+		<version>3.10.1</version> <!-- or latest -->
+		<configuration>
+		  <source>17</source> <!-- or 21, depending on your JDK -->
+		  <target>17</target>
+		</configuration>
+	  </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.7.1</version>
