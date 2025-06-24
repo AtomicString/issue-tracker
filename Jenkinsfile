@@ -17,7 +17,6 @@ pipeline {
     }
 
     stage('Maven Package') {
-      when { branch 'deploy' }
       steps {
         dir('tracker') {
           sh 'mvn clean package'
