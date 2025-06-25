@@ -25,7 +25,7 @@ public class App {
 		HikariDataSource ds = DataSourceFactory.createDataSource(username, password, dbName);
 		
 		Javalin app = Javalin.create();
-		app.get("/", ctx -> ctx.html(new MainPage().build().render()));
+		app.get("/", ctx -> ctx.html(new MainPage().getPage().render()));
 		app.events(events -> {
 			events.serverStopping(() -> {
 				ds.close();

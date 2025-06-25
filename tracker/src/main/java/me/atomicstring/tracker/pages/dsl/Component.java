@@ -1,9 +1,9 @@
 package me.atomicstring.tracker.pages.dsl;
 
-import j2html.tags.DomContent;
+import j2html.tags.ContainerTag;
 
 public interface Component {
 	
-	public DomContent build();
+	public ContainerTag<?> build();
 	
 }
