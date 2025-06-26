@@ -80,7 +80,7 @@ public class PageBuilder {
 		guard(PageStages.HEAD);
 		if (titleAdded) throw new IllegalStateException("title already added");
         this.titleAdded = true;
-		head.condWith(true, title(pageTitle));
+		head.with(title("Faultline | " + pageTitle));
 		return this;
 	}
 	
