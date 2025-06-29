@@ -1,4 +1,8 @@
 .env
+
+run.sh
+watch.sh
+
 */.classpath
 */.project
 */.settings/

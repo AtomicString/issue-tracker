@@ -12,7 +12,7 @@ public class PageBuilder {
 	ContainerTag<?> head = head();
 	ContainerTag<?> body = body();
 	ContainerTag<?> navbar = nav();
-	ContainerTag<?> content = null;
+	ContainerTag<?> content = div();
 	ContainerTag<?> footer = div();
 	
 	PageStages stage = PageStages.HEAD;
@@ -24,20 +24,25 @@ public class PageBuilder {
 			throw new IllegalStateException("Not at " + stage + " stage");
 		}
 	}
+	
+	public PageBuilder bodyClass(String... classes) {
+		body.withClasses(classes);
+		return this;
+	}
 
-	public PageBuilder nextStage() {
+	public PageBuilder nextStage(String... classes) {
 		switch(stage) {
 			case HEAD:
-				working.with(head);
+				working.with(head.withClasses(classes));
 				break;
 			case NAVBAR:
-				body.with(navbar);
+				body.with(navbar.withClasses(classes));
 				break;
 			case CONTENT:
-				body.with(content);
+				body.with(content.withClasses(classes));
 				break;
 			case FOOTER:
-				body.with(footer);
+				body.with(footer.withClasses(classes));
 				working.with(body);
 				break;
 			case END:
@@ -80,23 +85,23 @@ public class PageBuilder {
 		guard(PageStages.HEAD);
 		if (titleAdded) throw new IllegalStateException("title already added");
         this.titleAdded = true;
-		head.with(title("Faultline | " + pageTitle));
+		head.with(title("Faultline | " 	+ pageTitle));
 		return this;
 	}
 	
-	public PageBuilder attachComponent(Component component) {
+	public PageBuilder attachComponent(Component component, String... classes) {
 		switch(stage) {
 			case HEAD:
-				head.with(component.build());
+				head.with(component.build().withClasses(classes));
 				break;
 			case NAVBAR:
-				navbar.with(component.build());
+				navbar.with(component.build().withClasses(classes));
 				break;
 			case CONTENT:
-				content.with(component.build());
+				content.with(component.build().withClasses(classes));
 				break;
 			case FOOTER:
-				footer.with(component.build());
+				footer.with(component.build().withClasses(classes));
 				break;
 			case END:
 				throw new IllegalStateException("Cannot insert component at END stage");
