@@ -4,30 +4,52 @@ import java.util.UUID;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 
-public record User(
-    UUID id,
-    String username,
-    @ColumnName("password_hash") String passwordHash,
-    String role,
-    byte[] image
-) {
+public class User {
+    UUID id;
+    String username;
+    String passwordHash;
+    String role;
+    byte[] image;
 
-	public UUID id() {
+	public UUID getId() {
 		return id;
 	}
 
-	public String username() {
+	public String getUsername() {
 		return username;
 	}
 
-	public String passwordHash() {
+	@ColumnName("password_hash")
+	public String getPasswordHash() {
 		return passwordHash;
 	}
 
-	public String role() {
+	public String getRole() {
 		return role;
 	}
 
-	public byte[] image() {
+	public byte[] getImage() {
 		return image;
-	}}
+	}
+
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public void setImage(byte[] image) {
+		this.image = image;
+	}
+	
+}

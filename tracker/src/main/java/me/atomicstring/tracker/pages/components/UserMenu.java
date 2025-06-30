@@ -16,7 +16,7 @@ public class UserMenu implements Component {
 
 	@Override
 	public ContainerTag<?> build() {
-		return a(img().withSrc("/users/" + curUser.id() + "/image")).withHref("/profile/" + curUser.id());
+		return a(img().withSrc("/users/" + curUser.getId() + "/image")).withHref("/profile/" + curUser.getId());
 	}
 
 }

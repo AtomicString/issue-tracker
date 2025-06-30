@@ -102,7 +102,7 @@ public class App {
 	static UUID generateUnusedUUID(UserDao userDao) {
 		while (true) {
 			UUID candidate = UUID.randomUUID();
-			boolean exists = userDao.getAllUsers().stream().anyMatch(user -> user.id().equals(candidate));
+			boolean exists = userDao.getAllUsers().stream().anyMatch(user -> user.getId().equals(candidate));
 			if (!exists) {
 				return candidate;
 			}
@@ -133,8 +133,9 @@ public class App {
 
 			User potentialUser = userDao.getUserByName(username)
 					.orElseThrow(() -> new ForbiddenResponse("Invalid username or password"));
-			if (BCrypt.checkpw(passsword, potentialUser.passwordHash())) {
-				sessionService.createSessionForUser(potentialUser);
+			if (BCrypt.checkpw(passsword, potentialUser.getPasswordHash())) {
+				UUID sessionId = sessionService.createSessionForUser(potentialUser);
+				ctx.cookie("session", sessionId.toString(), 86400);
 				ctx.redirect("/");
 				return;
 			}
@@ -177,7 +178,13 @@ public class App {
 				UUID id = generateUnusedUUID(userDao);
 				String password_hash = BCrypt.hashpw(password, BCrypt.gensalt());
 
-				User user = new User(id, username, password_hash, "user", imageBytes);
+				User user = new User();
+				
+				user.setId(id);
+				user.setUsername(username);
+				user.setPasswordHash(password_hash);
+				user.setRole("user");
+				user.setImage(imageBytes);
 
 				userDao.insertUser(user);
 				sessionService.createSessionForUser(user);
@@ -195,7 +202,7 @@ public class App {
 
 			User user = userDao.getUserById(userId).orElseThrow(() -> new NotFoundResponse("User could not be found"));
 
-			byte[] imageData = user.image();
+			byte[] imageData = user.getImage();
 
 			if (imageData != null) {
 				ctx.contentType("image/jpeg"); // or detect dynamically
@@ -216,12 +223,13 @@ public class App {
 		app.before(ctx -> {
 			String sessionId = ctx.cookie("session");
 			if (sessionId != null) {
-				User user = sessionService.getUserForSession(UUID.fromString(sessionId));
-				if (user != null) {
+				sessionService.getUserForSession(UUID.fromString(sessionId)).ifPresentOrElse(user -> {
 					ctx.attribute("user", user);
-				} else {
+					logger.info("Logged in");
+				}, () -> {
 					ctx.attribute("user", new AnonUser());
-				}
+					ctx.removeCookie("session");
+				});
 			} else {
 				ctx.attribute("user", new AnonUser());
 			}

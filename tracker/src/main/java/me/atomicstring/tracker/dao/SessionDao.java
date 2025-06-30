@@ -8,20 +8,21 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-import me.atomicstring.tracker.dao.records.Session;
+import me.atomicstring.tracker.dao.data.Session;
 
 
-@RegisterBeanMapper(Session.class)
 public interface SessionDao {
 	
-	@SqlUpdate("INSERT INTO session (id, user_id, created_at, expires_at) VALUES (:id, :user_id, :created_at, :expires_at")
+	@SqlUpdate("INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (:id, :userId, :createdAt, :expiresAt)")
+	@RegisterBeanMapper(Session.class)
 	void createSession(@BindBean Session session);
 	
 	
-	@SqlQuery("SELECT * FROM session WHERE id = :id")
+	@SqlQuery("SELECT * FROM sessions WHERE id = :id")
+	@RegisterBeanMapper(Session.class)
 	Session getById(@Bind("id") UUID id);
 	
-	@SqlUpdate("DELETE FROM session WHERE id = :id")
+	@SqlUpdate("DELETE FROM sessions WHERE id = :id")
 	void delete(@Bind("id") UUID id);
 	
 }

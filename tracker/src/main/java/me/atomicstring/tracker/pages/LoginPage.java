@@ -3,8 +3,8 @@ package me.atomicstring.tracker.pages;
 import io.javalin.http.Context;
 import j2html.tags.specialized.HtmlTag;
 import me.atomicstring.tracker.pages.components.Header;
-import me.atomicstring.tracker.pages.components.LoginForm;
 import me.atomicstring.tracker.pages.components.Logo;
+import me.atomicstring.tracker.pages.components.forms.LoginForm;
 import me.atomicstring.tracker.pages.dsl.Page;
 import me.atomicstring.tracker.pages.dsl.PageBuilder;
 

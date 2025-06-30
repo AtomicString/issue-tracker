@@ -2,12 +2,12 @@ package me.atomicstring.tracker.middleware;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
-import io.javalin.http.NotFoundResponse;
 import me.atomicstring.tracker.dao.SessionDao;
 import me.atomicstring.tracker.dao.UserDao;
-import me.atomicstring.tracker.dao.records.Session;
+import me.atomicstring.tracker.dao.data.Session;
 import me.atomicstring.tracker.users.User;
 
 public class SessionService {
@@ -19,21 +19,26 @@ public class SessionService {
         this.userDao = userDao;
     }
 
-    public User getUserForSession(UUID sessionId) {
+    public Optional<User> getUserForSession(UUID sessionId) {
         Session session = sessionDao.getById(sessionId);
         if (session == null) {
-            return null;
+            return Optional.empty();
         } else if (session.isExpired()) {
         	deleteSession(sessionId);
-        	return null;
+        	return Optional.empty();
         }
-        return userDao.getUserById(session.user_id()).orElseThrow(() -> new NotFoundResponse("Session's user could not be found"));
+        return userDao.getUserById(session.getUserId());
     }
 
     public UUID createSessionForUser(User user) {
         UUID sessionId = UUID.randomUUID();
         Instant now = Instant.now();
-        sessionDao.createSession(new Session(sessionId, user.id(), now, now.plus(Duration.ofDays(1))));
+        Session session = new Session();
+        session.setId(sessionId);
+        session.setUserId(user.getId());
+        session.setCreatedAt(now);
+        session.setExpiresAt(now.plus(Duration.ofDays(1)));
+        sessionDao.createSession(session);
         return sessionId;
     }
 

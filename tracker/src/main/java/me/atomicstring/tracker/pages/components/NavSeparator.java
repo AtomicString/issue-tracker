@@ -8,7 +8,7 @@ public class NavSeparator implements Component {
 
 	@Override
 	public ContainerTag<?> build() {
-		return span(" | ").withClasses("px-3");
+		return div(span(" | ").withClasses("px-3"));
 	}
 
 }

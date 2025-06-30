@@ -1,7 +1,9 @@
 package me.atomicstring.tracker.pages;
 
 import io.javalin.http.Context;
+import static j2html.TagCreator.script;
 import j2html.tags.specialized.HtmlTag;
+import me.atomicstring.tracker.pages.components.Header;
 import me.atomicstring.tracker.pages.components.LoginOption;
 import me.atomicstring.tracker.pages.components.Logo;
 import me.atomicstring.tracker.pages.components.LogoutMenu;
@@ -18,6 +20,7 @@ public class MainPage implements Page {
 		// HEAD
 		PageBuilder base = new PageBuilder();
 		base.addScript("/webjars/htmx.org/2.0.5/dist/htmx.min.js");
+		base.addScript("https://unpkg.com/lucide@latest");
 		base.addScript("https://cdn.tailwindcss.com");
 		base.addTitle("Home");
 		base.nextStage();
@@ -25,18 +28,21 @@ public class MainPage implements Page {
 		base.attachComponent(new Logo());
 		if (ctx.attribute("user") != null) {
 			if (ctx.attribute("user") instanceof User) {
-				base.attachComponent(new LogoutMenu());
-				base.attachComponent(new NavSeparator());
-				base.attachComponent(new UserMenu(ctx.attribute("user")));
+				base.attachComponent(new UserMenu(ctx.attribute("user")), "float-right");
+				base.attachComponent(new NavSeparator(), "float-right");
+				base.attachComponent(new LogoutMenu(), "float-right");
 			} else {
-				base.attachComponent(new LoginOption(), "float-right");
+				base.attachComponent(new LoginOption(), "flex items-center");
 			}
 		}
-		base.nextStage("py-5 px-5");
+		base.nextStage("flex justify-between items-center py-5 px-5");
 		// CONTENT
-		base.nextStage("mx-auto w-4/12");
+		base.attachComponent(new Header("Issues", 3));
+		base.attachComponent(, null)
+		base.nextStage("mx-auto w-10/12 border border-zinc-200 p-5 mt-4");
 		// FOOTER
 		base.skipStage();
+		base.addRaw(script("lucide.createIcons();"));
 		return base.build();
 	}
 

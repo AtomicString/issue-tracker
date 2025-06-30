@@ -109,9 +109,14 @@ public class PageBuilder {
 		return this;
 	}
 	
-	public PageBuilder addNavItem(DomContent content, Links link) {
-		guard(PageStages.NAVBAR);
-		navbar.with(link.build().with(content));
+//	public PageBuilder addNavItem(DomContent content, Links link) {
+//		guard(PageStages.NAVBAR);
+//		navbar.with(link.build().with(content));
+//		return this;
+//	}
+	
+	public PageBuilder addRaw(DomContent content) {
+		working.with(content);
 		return this;
 	}
 	
