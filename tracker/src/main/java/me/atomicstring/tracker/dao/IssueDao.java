@@ -14,6 +14,14 @@ import me.atomicstring.tracker.dao.data.Issue;
 
 public interface IssueDao {
 	
+	@SqlQuery("SELECT * FROM issues")
+	@RegisterBeanMapper(Issue.class)
+	public List<Issue> getAllIssues();
+	
+	@SqlQuery("SELECT * FROM issues WHERE id=:id")
+	@RegisterBeanMapper(Issue.class)
+	public Issue getIssueFromId(@Bind("id") UUID id);
+
 	@SqlQuery("SELECT * FROM issues ORDER BY created_at DESC, id DESC LIMIT :limit")
 	@RegisterBeanMapper(Issue.class)
 	public List<Issue> getLatestPage(@Bind("limit") int limit);

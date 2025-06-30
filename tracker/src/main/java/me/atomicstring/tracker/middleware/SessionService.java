@@ -27,7 +27,7 @@ public class SessionService {
         	deleteSession(sessionId);
         	return Optional.empty();
         }
-        return userDao.getUserById(session.getUserId());
+        return Optional.of(userDao.getUserById(session.getUserId()));
     }
 
     public UUID createSessionForUser(User user) {

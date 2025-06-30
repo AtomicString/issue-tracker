@@ -22,18 +22,18 @@ public interface UserDao {
 	@RegisterBeanMapper(User.class)
     void insertUser(@BindBean User user);
 	
-	@SqlQuery("SELECT * FROM users WHERE id = :id")
+	@SqlQuery("SELECT * FROM users WHERE id=:id")
 	@RegisterBeanMapper(User.class)
-	Optional<User> getUserById(@Bind("id") UUID id);
+	User getUserById(@Bind("id") UUID id);
 
 	@SqlQuery("SELECT * FROM users WHERE username = :username")
 	@RegisterBeanMapper(User.class)
 	Optional<User> getUserByName(@Bind("username") String username);
 	
-	@SqlQuery("SELECT image FROM users WHERE id = :id")
+	@SqlQuery("SELECT image FROM users WHERE id=:id")
 	byte[] getImage(@Bind("id") UUID id);
 	
-	@SqlUpdate("UPDATE users SET username = :username, image = :image, password_hash = :passwordHash, role = :role WHERE id = :id")
+	@SqlUpdate("UPDATE users SET username=:username, image=:image, password_hash=:passwordHash, role=:role WHERE id=:id")
 	@RegisterBeanMapper(User.class)
 	void updateUser(@BindBean User user);
 	
