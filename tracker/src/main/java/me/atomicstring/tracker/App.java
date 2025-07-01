@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -23,9 +24,11 @@ import io.javalin.http.ContentType;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.UploadedFile;
+import me.atomicstring.tracker.dao.CommentDao;
 import me.atomicstring.tracker.dao.IssueDao;
 import me.atomicstring.tracker.dao.SessionDao;
 import me.atomicstring.tracker.dao.UserDao;
+import me.atomicstring.tracker.dao.data.Comment;
 import me.atomicstring.tracker.dao.data.Issue;
 import me.atomicstring.tracker.middleware.SessionService;
 import me.atomicstring.tracker.pages.IssuePage;
@@ -33,6 +36,7 @@ import me.atomicstring.tracker.pages.LoginPage;
 import me.atomicstring.tracker.pages.MainPage;
 import me.atomicstring.tracker.pages.NewIssuePage;
 import me.atomicstring.tracker.pages.SignupPage;
+import me.atomicstring.tracker.pages.components.CommentBox;
 import me.atomicstring.tracker.users.AnonUser;
 import me.atomicstring.tracker.users.User;
 
@@ -43,6 +47,7 @@ import me.atomicstring.tracker.users.User;
 public class App {
 
 	static final Logger logger = LoggerFactory.getLogger(App.class);
+	public static Jdbi jdbi;
 
 	public static void main(String[] args) {
 		String username = System.getenv("POSTGRES_USER");
@@ -51,7 +56,7 @@ public class App {
 
 		HikariDataSource ds = DataSourceFactory.createDataSource(username, password, dbName);
 
-		Jdbi jdbi = Jdbi.create(ds);
+		jdbi = Jdbi.create(ds);
 		jdbi.installPlugin(new SqlObjectPlugin());
 
 		jdbi.useHandle(handle -> {
@@ -129,6 +134,7 @@ public class App {
 		UserDao userDao = jdbi.onDemand(UserDao.class);
 		SessionDao sessionDao = jdbi.onDemand(SessionDao.class);
 		IssueDao issueDao = jdbi.onDemand(IssueDao.class);
+		CommentDao commentDao = jdbi.onDemand(CommentDao.class);
 
 		SessionService sessionService = new SessionService(sessionDao, userDao);
 
@@ -262,6 +268,33 @@ public class App {
 			
 		});
 		
+		app.get("/new-comment", ctx -> {
+			if (ctx.attribute("user") instanceof AnonUser) {
+				ctx.status(401);
+				ctx.header("HX-Redirect", "/login");
+				return;
+			}
+			UUID issueId = UUID.fromString(ctx.queryParam("issue"));
+			ctx.html(new CommentBox(issueId).build().render());
+		});
+		
+		app.post("/new-comment", ctx -> {
+			UUID issueId = UUID.fromString(ctx.formParam("issue"));
+			String content = ctx.formParam("comment");
+			UUID authorId = ((User) ctx.attribute("user")).getId();
+			Instant createdAt = Instant.now();
+			
+			Comment comment = new Comment();
+			comment.setAuthorId(authorId);
+			comment.setContent(content);
+			comment.setCreatedAt(createdAt);
+			comment.setId(UUID.randomUUID());
+			comment.setIssueId(issueId);
+			
+			commentDao.insertComment(comment);
+			ctx.redirect("/issue/" + issueId);
+		});
+		
 		app.get("/issue/{id}", ctx -> {
 			UUID issueId = UUID.fromString(ctx.pathParam("id"));
 			logger.info(issueId.toString());
@@ -269,7 +302,9 @@ public class App {
 			logger.info(issue.getAuthorId().toString());
 			User user = userDao.getUserById(issue.getAuthorId());
 			
-			ctx.html("<!DOCTYPE html>" + new IssuePage(issue, user).getPage(ctx).render());
+			List<Comment> comments = commentDao.getCommentsForIssue(issueId);
+			
+			ctx.html("<!DOCTYPE html>" + new IssuePage(issue, user, comments).getPage(ctx).render());
 		});
 
 		app.get("/users/{id}/image", ctx -> {

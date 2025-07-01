@@ -32,14 +32,7 @@ public class NewIssuePage implements Page {
 		base.attachComponent(new Logo());
 		if (ctx.attribute("user") != null) {
 			if (ctx.attribute("user") instanceof User) {
-				base.attachComponent(new Component() {
-					
-					@Override
-					public ContainerTag<?> build() {
-						// TODO Auto-generated method stub
-						return div(new UserMenu(ctx.attribute("user")).build(), new NavSeparator().build(), new LogoutMenu().build());
-					}
-				}, "flex items-center");
+				base.attachComponent(new LogoutMenu());
 			} else {
 				base.attachComponent(new LoginOption(), "flex items-center");
 			}

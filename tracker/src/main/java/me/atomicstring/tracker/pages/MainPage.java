@@ -22,9 +22,9 @@ import me.atomicstring.tracker.pages.dsl.PageBuilder;
 import me.atomicstring.tracker.users.User;
 
 public class MainPage implements Page {
-	
+
 	IssueDao issueDao;
-	
+
 	public MainPage(IssueDao issueDao) {
 		this.issueDao = issueDao;
 	}
@@ -42,15 +42,7 @@ public class MainPage implements Page {
 		base.attachComponent(new Logo());
 		if (ctx.attribute("user") != null) {
 			if (ctx.attribute("user") instanceof User) {
-				base.attachComponent(new Component() {
-					
-					@Override
-					public ContainerTag<?> build() {
-						// TODO Auto-generated method stub
-						return div(new UserMenu(ctx.attribute("user")).build(), new NavSeparator().build(), new LogoutMenu().build());
-					}
-				}, "flex items-center");
-				
+				base.attachComponent(new LogoutMenu());
 			} else {
 				base.attachComponent(new LoginOption(), "flex items-center");
 			}
@@ -58,18 +50,23 @@ public class MainPage implements Page {
 		base.nextStage("flex justify-between items-center py-5 px-5");
 		// CONTENT
 		base.attachComponent(new Component() {
-			
+
 			@Override
 			public ContainerTag<?> build() {
 				return div(
-						new Header("Issue", 3).build().withClasses("inline-block"),
+						new Header("Issue", 3)
+						.build()
+						.withClasses("inline-block")
+					).condWith(
+						ctx.attribute("user") instanceof User,
 						
 						a("New Issue")
-						.withClasses("border-green-400 border-2 hover:bg-green-400 transition duration-200 ease-in-out rounded-2xl float-right p-2")
-						.withHref("/issues")
-					);
+						.withClasses(
+							"border-green-400 border-2 hover:bg-green-400 transition duration-200 ease-in-out rounded-2xl float-right p-2"
+						)
+						.withHref("/issues"));
 			}
-		}, "flex justify-between items-center");
+		}, "w-full");
 		base.attachComponent(new IssueList(issueDao.getLatestPage(10)));
 		base.nextStage("mx-auto w-10/12 border border-zinc-200 rounded-xl p-5 mt-4");
 		// FOOTER

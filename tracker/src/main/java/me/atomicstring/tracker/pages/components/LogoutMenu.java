@@ -8,7 +8,7 @@ public class LogoutMenu implements Component {
 
 	@Override
 	public ContainerTag<?> build() {
-		return a(span("Logout").withClasses("text-xl", "font-bold")).withHref("/logout");
+		return a(span("Logout").withClasses("text-xl")).withHref("/logout");
 	}
 
 }

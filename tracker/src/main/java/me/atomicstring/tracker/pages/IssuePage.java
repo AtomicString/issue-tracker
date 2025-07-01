@@ -1,12 +1,17 @@
 package me.atomicstring.tracker.pages;
 
+import static j2html.TagCreator.a;
 import static j2html.TagCreator.div;
 import static j2html.TagCreator.script;
+
+import java.util.List;
 
 import io.javalin.http.Context;
 import j2html.tags.ContainerTag;
 import j2html.tags.specialized.HtmlTag;
+import me.atomicstring.tracker.dao.data.Comment;
 import me.atomicstring.tracker.dao.data.Issue;
+import me.atomicstring.tracker.pages.components.CommentSection;
 import me.atomicstring.tracker.pages.components.Header;
 import me.atomicstring.tracker.pages.components.LoginOption;
 import me.atomicstring.tracker.pages.components.Logo;
@@ -23,11 +28,12 @@ public class IssuePage implements Page {
 
 	Issue issue;
 	User author;
-	
-	public IssuePage(Issue issue, User author) {
-		super();
+	List<Comment> comments;
+
+	public IssuePage(Issue issue, User author, List<Comment> comments) {
 		this.issue = issue;
 		this.author = author;
+		this.comments = comments;
 	}
 
 	@Override
@@ -42,14 +48,7 @@ public class IssuePage implements Page {
 		base.attachComponent(new Logo());
 		if (ctx.attribute("user") != null) {
 			if (ctx.attribute("user") instanceof User) {
-				base.attachComponent(new Component() {
-					
-					@Override
-					public ContainerTag<?> build() {
-						// TODO Auto-generated method stub
-						return div(new UserMenu(ctx.attribute("user")).build(), new NavSeparator().build(), new LogoutMenu().build());
-					}
-				}, "flex items-center");
+				base.attachComponent(new LogoutMenu());
 			} else {
 				base.attachComponent(new LoginOption(), "flex items-center");
 			}
@@ -59,6 +58,20 @@ public class IssuePage implements Page {
 		base.attachComponent(new Header(issue.getTitle(), 3));
 		base.attachComponent(new Text(author.getUsername()), "text-lg");
 		base.attachComponent(new Text(issue.getBody()), "mt-5 border border-zinc-300 rounded-xl p-4");
+		base.attachComponent(new Component() {
+			
+			@Override
+			public ContainerTag<?> build() {
+				return div(
+						a("Comment")
+						.attr("hx-get", "/new-comment?issue=" + issue.getId().toString())
+						.attr("hx-swap", "outerHTML")
+						.withClass("text-blue-600 cursor-pointer underline decoration-solid")
+					).attr("hx-target", "this");
+			}
+		}, "mt-5");
+		base.attachComponent(new Header("Comments", 2), "mt-5");
+		base.attachComponent(new CommentSection(comments));
 		base.nextStage("mx-auto w-10/12 border border-zinc-200 p-7 mt-4");
 		// FOOTER
 		base.skipStage();
