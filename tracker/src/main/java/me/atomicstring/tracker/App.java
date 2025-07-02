@@ -24,12 +24,21 @@ import io.javalin.http.ContentType;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.UploadedFile;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.graphite.GraphiteConfig;
+import io.micrometer.graphite.GraphiteMeterRegistry;
 import me.atomicstring.tracker.dao.CommentDao;
 import me.atomicstring.tracker.dao.IssueDao;
 import me.atomicstring.tracker.dao.SessionDao;
 import me.atomicstring.tracker.dao.UserDao;
 import me.atomicstring.tracker.dao.data.Comment;
 import me.atomicstring.tracker.dao.data.Issue;
+import me.atomicstring.tracker.metrics.MetricsService;
 import me.atomicstring.tracker.middleware.SessionService;
 import me.atomicstring.tracker.pages.IssuePage;
 import me.atomicstring.tracker.pages.LoginPage;
@@ -48,6 +57,7 @@ public class App {
 
 	static final Logger logger = LoggerFactory.getLogger(App.class);
 	public static Jdbi jdbi;
+	public static MetricsService metrics;
 
 	public static void main(String[] args) {
 		String username = System.getenv("POSTGRES_USER");
@@ -59,6 +69,55 @@ public class App {
 		jdbi = Jdbi.create(ds);
 		jdbi.installPlugin(new SqlObjectPlugin());
 
+		createDbTables();
+
+		Javalin app = Javalin.create(config -> {
+			config.staticFiles.enableWebjars();
+			config.requestLogger.http((ctx, ms) -> {
+				logger.info(ctx.path() + " took " + ms);
+			});
+		});
+
+		GraphiteConfig config = new GraphiteConfig() {
+			@Override
+			public String get(String key) {
+				return null; // default everything else
+			}
+
+			@Override
+			public String host() {
+				return "graphite"; // or "graphite" if in the same docker-compose network
+			}
+
+			@Override
+			public int port() {
+				return 2003;
+			}
+		};
+
+		GraphiteMeterRegistry registry = new GraphiteMeterRegistry(config, Clock.SYSTEM);
+		new ClassLoaderMetrics().bindTo(registry);
+        new JvmGcMetrics().bindTo(registry);
+        new JvmMemoryMetrics().bindTo(registry);
+        new ProcessorMetrics().bindTo(registry);
+
+		metrics = new MetricsService(registry);
+
+		handleRoutes(app, jdbi);
+
+		app.events(events -> {
+			events.serverStopping(() -> {
+				ds.close();
+			});
+		});
+
+		handleMiddleware(app, jdbi);
+
+		handleExceptions(app);
+		app.start(8000);
+	}
+
+	private static void createDbTables() {
 		jdbi.useHandle(handle -> {
 			try (Scanner scanner = new Scanner(App.class.getResourceAsStream("/schema.sql"),
 					StandardCharsets.UTF_8.name())) {
@@ -74,40 +133,6 @@ public class App {
 				}
 			}
 		});
-
-		jdbi.useHandle(handle -> {
-			try (var conn = handle.getConnection();
-					var stmt = conn.createStatement();
-					var rs = stmt.executeQuery("SELECT * FROM users LIMIT 0")) {
-				var meta = rs.getMetaData();
-				logger.info("---- ResultSet Metadata ----");
-				for (int i = 1; i <= meta.getColumnCount(); i++) {
-					logger.info(String.format("[%d] %s (%s)%n", i, meta.getColumnName(i), meta.getColumnLabel(i)));
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-
-		Javalin app = Javalin.create(config -> {
-			config.staticFiles.enableWebjars();
-			config.requestLogger.http((ctx, ms) -> {
-				logger.info(ctx.path() + " took " + ms);
-			});
-		});
-
-		handleRoutes(app, jdbi);
-
-		app.events(events -> {
-			events.serverStopping(() -> {
-				ds.close();
-			});
-		});
-
-		handleMiddleware(app, jdbi);
-
-		handleExceptions(app);
-		app.start(8000);
 	}
 
 	static UUID generateUnusedUserUUID(UserDao userDao) {
@@ -138,7 +163,12 @@ public class App {
 
 		SessionService sessionService = new SessionService(sessionDao, userDao);
 
-		app.get("/", ctx -> ctx.html("<!DOCTYPE html>" + new MainPage(issueDao).getPage(ctx).render()));
+		app.get("/", ctx -> {
+			Timer.Sample sample = metrics.startRequestTimer();
+			ctx.html("<!DOCTYPE html>" + new MainPage(issueDao).getPage(ctx).render());
+			metrics.stopRequestTimer(sample, "/");
+			
+		});
 		app.get("/login", ctx -> {
 			if (ctx.attribute("user") instanceof User) {
 				ctx.redirect("/");
@@ -240,11 +270,13 @@ public class App {
 		});
 		
 		app.get("/issues", ctx -> {
+			Timer.Sample sample = metrics.startRequestTimer();
 			if (ctx.attribute("user") instanceof AnonUser) {
 				ctx.redirect("/login");
 				return;
 			}
 			ctx.html("<!DOCTYPE html>" + new NewIssuePage().getPage(ctx).render());
+			metrics.stopRequestTimer(sample, "/issues");
 		});
 		
 		app.post("/issues", ctx -> {
@@ -253,6 +285,7 @@ public class App {
 				return;
 			}
 			
+			metrics.countIssueCreated();
 			User user = ctx.attribute("user");
 			
 			Issue issue = new Issue();
@@ -296,6 +329,7 @@ public class App {
 		});
 		
 		app.get("/issue/{id}", ctx -> {
+			Timer.Sample sample = metrics.startRequestTimer();
 			UUID issueId = UUID.fromString(ctx.pathParam("id"));
 			logger.info(issueId.toString());
 			Issue issue = issueDao.getIssueFromId(issueId);
@@ -305,6 +339,7 @@ public class App {
 			List<Comment> comments = commentDao.getCommentsForIssue(issueId);
 			
 			ctx.html("<!DOCTYPE html>" + new IssuePage(issue, user, comments).getPage(ctx).render());
+			metrics.stopRequestTimer(sample, "/issue/{id}");
 		});
 
 		app.get("/users/{id}/image", ctx -> {

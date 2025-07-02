@@ -1,0 +1,36 @@
+- name: Add Jenkins GPG key
+  get_url:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    dest: /usr/share/keyrings/jenkins-keyring.asc
+    mode: '0644'
+  when: not (ansible_facts.packages['jenkins'] is defined)
+
+- name: Add Jenkins APT repository
+  copy:
+    dest: /etc/apt/sources.list.d/jenkins.list
+    content: |
+      deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+    mode: '0644'
+  when: not (ansible_facts.packages['jenkins'] is defined)
+
+- name: Update APT cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install OpenJDK (for Jenkins)
+  apt:
+    name: openjdk-17-jdk
+    state: present
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: present
+
+- name: Ensure Jenkins is started and enabled
+  systemd:
+    name: jenkins
+    enabled: yes
+    state: started
+

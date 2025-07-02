@@ -1,0 +1,8 @@
+- name: Provision local VM for CI/CD
+  hosts: local
+  become: yes
+  roles:
+    - common
+    - docker
+    - jenkins
+
